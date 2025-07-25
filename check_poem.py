@@ -206,94 +206,66 @@ def check_luc_bat_rule(poem: str):
     
     ## chia thành các dòng tổng số dòng phải chẵn
     lines = [l.strip() for l in poem.splitlines() if l.strip()]
-    print(f"----Tổng thể----")
+    # print(f"----Tổng thể----")
     
     if len(lines) % 2 != 0:
-        print(-100 ,f"\\- Số câu {len(lines)} là lẻ: ")
+        # print(-100 ,f"\\- Số câu {len(lines)} là lẻ: ")
         score += -100
+        return score
     else:
-        print(0, f"Số câu {len(lines)} là chẵn")
         previous_bat_8th_word = None
         
         max_score_per_line = 100//(len(lines)*2)
         for i in range(0, len(lines), 2):
-            print(f"----Cặp lục bát thứ {i//2+1}----")
+            # print(f"----Cặp lục bát thứ {i//2+1}----")
             luc = lines[i].split()
             bat = lines[i+1].split()
             
             
-            # 1. Số chữ
-            if len(luc) != 6:
-                print(-max_score_per_line, f"Câu '{lines[i]}' có {len(luc)} chữ, không phải là 6")
-                score += -max_score_per_line
-            if len(bat) != 8:
-                print(-max_score_per_line, f"Câu '{lines[i+1]}' có {len(bat)} chữ, không phải là 8")
-                score += -max_score_per_line
-            
-            # 2. Gieo vần
-            luc_6th_word = luc[-1]
-            bat_6th_word = bat[5]
-            bat_8th_word = bat[-1]
+            if len(luc) == 6 and len(bat) == 8:
+                # 2. Gieo vần
+                luc_6th_word = luc[-1]
+                bat_6th_word = bat[5]
+                bat_8th_word = bat[-1]
+                            
+                if previous_bat_8th_word:
+                    if compare(previous_bat_8th_word, luc_6th_word):
+                        pass
+                    else:
+                        # print(-max_score_per_line, f"vần cuối ('{luc_6th_word}') của câu 6 ({lines[i]}) không khớp với vần cuối ({previous_bat_8th_word}) của câu 8 trước nó.")
+                        score += -max_score_per_line
                         
-            if previous_bat_8th_word:
-                if compare(previous_bat_8th_word, luc_6th_word):
-                    pass
-                else:
-                    print(-max_score_per_line, f"vần cuối ('{luc_6th_word}') của câu 6 ({lines[i]}) không khớp với vần cuối ({previous_bat_8th_word}) của câu 8 trước nó.")
-                    score += -max_score_per_line
                     
-                
-            if compare(luc_6th_word, bat_6th_word):
-                pass 
+                if compare(luc_6th_word, bat_6th_word):
+                    pass 
+                else:
+                    # print(-max_score_per_line, f"vần cuối ({luc_6th_word}) của câu 6 ({lines[i]}) không khớp với vần thứ 6 ({bat_6th_word}) của câu 8 sau nó {lines[i+1]}.")
+                    score += -max_score_per_line
+                                
+                if bat_8th_word:
+                    previous_bat_8th_word = bat_8th_word
+                    
+                # 3. Thanh điệu
+
+                luc_tone_check = check_tone_sentence(luc)
+                if luc_tone_check[0]:
+                    # print(-max_score_per_line, f"các từ {luc_tone_check[0]} trong câu 6 ({lines[i]}) sai thanh điệu.")
+                    score += -max_score_per_line/3*len(luc_tone_check[0])
+                        
+                    
+                bat_tone_check = check_tone_sentence(bat)
+                if bat_tone_check[0]:
+                    # print(-max_score_per_line, f"các từ {bat_tone_check[0]} trong câu 6 ({lines[i+1]}) sai thanh điệu.")
+                    score += -max_score_per_line/5*len(luc_tone_check[0])
+                    
+                if bat_tone_check[1]:
+                    # print(-max_score_per_line/5, bat_tone_check[1])
+                    score += -max_score_per_line/5
+                        
             else:
-                print(-max_score_per_line, f"vần cuối ({luc_6th_word}) của câu 6 ({lines[i]}) không khớp với vần thứ 6 ({bat_6th_word}) của câu 8 sau nó {lines[i+1]}.")
-                score += -max_score_per_line
-                              
-            if bat_8th_word:
-                previous_bat_8th_word = bat_8th_word
-                
-            # 3. Thanh điệu
-
-            luc_tone_check = check_tone_sentence(luc)
-            if luc_tone_check[0]:
-                print(-max_score_per_line, f"các từ {luc_tone_check[0]} trong câu 6 ({lines[i]}) sai thanh điệu.")
-                score += -max_score_per_line
-                
-            if luc_tone_check[1]:
-                if isinstance(luc_tone_check[1], int):
-                    print('Sai số từ')
-                    # score += -max_score_per_line
-                    pass
-                    
-                else:
-                    print(-max_score_per_line, luc_tone_check[1])
-                    score += -max_score_per_line
-                    
-                
-            bat_tone_check = check_tone_sentence(bat)
-            if bat_tone_check[0]:
-                print(-max_score_per_line, f"các từ {bat_tone_check[0]} trong câu 6 ({lines[i+1]}) sai thanh điệu.")
-                score += -max_score_per_line
-                
-            if bat_tone_check[1]:
-                if isinstance(bat_tone_check[1], int):
-                    print('Sai số từ')
-                    pass
-                else:
-                    print(-max_score_per_line, bat_tone_check[1])
-            
+                # print(-max_score_per_line * 4, f"Cặp Câu '{lines[i]}' và '{lines[i+1]}' sai số từ.")
+                score += -max_score_per_line * 4
         return score
-
-
-
-# poem = """
-# Trèo lên cây bưởi hái hoa
-# Bước xuống vườn cà hái nụ tầm xuân
-# Nụ tầm xuân nở ra xanh biếc
-# Em đã có chồng anh tiếc lắm thay
-# """
-
-# print(check_luc_bat_rule(poem))  # True nếu đảm bảo cấu trúc và vần & thanh điệu đơn giản
             
             
         
