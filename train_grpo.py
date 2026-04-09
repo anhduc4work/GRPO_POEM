@@ -99,20 +99,9 @@ def load_model(cfg: TrainConfig):
 # ─── Build GRPO trainer ───────────────────────────────────────────────────────
 
 def build_trainer(model, tokenizer, dataset, cfg: TrainConfig):
-    vllm_sampling_params = SamplingParams(
-        min_p=0.05,
-        top_p=0.9,
-        top_k=50,
-        seed=cfg.seed,
-        stop=[tokenizer.eos_token],
-        include_stop_str_in_output=True,
-        max_tokens=cfg.max_completion_length,
-    )
-
     training_args = GRPOConfig(
-        # vLLM
+        # vLLM — sampling params go directly on GRPOConfig, NOT as vllm_sampling_params
         use_vllm=True,
-        vllm_sampling_params=vllm_sampling_params,
         # Training
         learning_rate=cfg.learning_rate,
         num_generations=cfg.num_generations,
@@ -131,7 +120,7 @@ def build_trainer(model, tokenizer, dataset, cfg: TrainConfig):
         # Misc
         seed=cfg.seed,
         report_to="none",
-        optim="adamw_8bit",
+        optim="paged_adamw_8bit",   # paged variant is safer for long GRPO runs
         lr_scheduler_type="cosine",
     )
 
@@ -180,10 +169,11 @@ def test_inference(model, tokenizer, lora_path: str, cfg: TrainConfig):
             add_generation_prompt=True,
             tokenize=False,
         )
+        lora_request = model.load_lora(lora_path)
         output = model.fast_generate(
             [text],
             sampling_params=sampling_params,
-            lora_request=model.load_lora(lora_path),
+            lora_request=lora_request,
         )[0].outputs[0].text
 
         print(f"\nPrompt: {prompt_text}")
